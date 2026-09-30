@@ -1,5 +1,6 @@
 package dev.freelocs.aetherion.core
 
+import dev.freelocs.aetherion.autoclicker.AutoClicker
 import dev.freelocs.aetherion.gui.AetherionScreen
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands.literal
@@ -16,6 +17,7 @@ object AetherionMod : ClientModInitializer {
 
     override fun onInitializeClient() {
         ConfigManager.load()
+        AutoClicker.register()
 
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, _ ->
             dispatcher.register(
@@ -31,6 +33,6 @@ object AetherionMod : ClientModInitializer {
             ConfigManager.save()
         }
 
-        logger.info("Aetherion $VERSION scaffold initialized — open config with /aetherion")
+        logger.info("Aetherion $VERSION initialized — open config with /aetherion")
     }
 }

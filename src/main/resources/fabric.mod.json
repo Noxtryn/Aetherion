@@ -3,7 +3,7 @@
     "id": "aetherion",
     "version": "${version}",
     "name": "Aetherion",
-    "description": "A quality-of-life dashboard for Hypixel Skyblock: HUD overlays, analytics, notifications, waypoints and market insight. Client-side information only.",
+    "description": "A quality-of-life dashboard for Hypixel Skyblock: HUD overlays, analytics, notifications, waypoints, market insight and a mob-targeted auto clicker.",
     "authors": ["Freelocs"],
     "contact": {
         "sources": "https://github.com/freelocs-dev/SkyOS"

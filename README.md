@@ -11,6 +11,23 @@ and Fabric Language Kotlin. This is **structure only** — no feature logic yet.
   ModMenu config icon — sidebar navigation across the categories above, each showing a
   "Coming soon" placeholder until its module ships.
 
+## Auto Clicker
+
+Mob-targeted auto clicker (`autoclicker/`), always on:
+
+- Triggers **only while you look at a selected mob** (crosshair on it, within attack reach).
+- Clicks at **15 CPS** in bursts of a random **3–5 clicks**, then pauses an extra **50 ms**, and
+  repeats — until the mob dies/despawns, you look away, or you die.
+- Clicks go through the vanilla attack key (like a real mouse click), timed per rendered frame.
+
+Config: ModMenu → Aetherion (or `/aetherion`) → **Auto Clicker**. It shows a searchable list of
+every mob on the server you're on, with its real name — server-named mobs (e.g. Skyblock's
+`[Lv55] Zealot 13k/13k❤` name tags → `Zealot`) are collected while you play and stored per
+server; mobs seen on the server are listed first and marked with a dot, followed by all vanilla
+mob types. Click a row to (de)select it. Stored in `config/aetherion.json` under `autoClicker`.
+
+> Many servers (Hypixel included) forbid auto clickers — use at your own risk.
+
 ## Design
 
 Colors, radii and layout sizes come from the Aetherion style guide and live in one place:

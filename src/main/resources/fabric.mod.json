@@ -3,10 +3,10 @@
     "id": "aetherion",
     "version": "${version}",
     "name": "Aetherion",
-    "description": "A quality-of-life dashboard for Hypixel Skyblock: HUD overlays, analytics, notifications, waypoints and market insight. Client-side information only.",
+    "description": "A modular, animated client interface for Hypixel SkyBlock: the Aurora configuration GUI, a feature framework and a HUD layout editor. Client-side and informational only.",
     "authors": ["Freelocs"],
     "contact": {
-        "sources": "https://github.com/freelocs-dev/SkyOS"
+        "sources": "https://github.com/Noxtryn/Aetherion"
     },
     "license": "MIT",
     "icon": "assets/aetherion/icon.png",
@@ -23,8 +23,8 @@
         ]
     },
     "depends": {
-        "fabricloader": ">=0.19.3",
-        "minecraft": "~26.1.2",
+        "fabricloader": ">=0.19.5",
+        "minecraft": "~${mcTarget}",
         "java": ">=25",
         "fabric-api": "*",
         "fabric-language-kotlin": "*"

@@ -1,14 +1,23 @@
 plugins {
     id("net.fabricmc.fabric-loom") version "1.17.17"
-    id("org.jetbrains.kotlin.jvm") version "2.4.10"
+    id("org.jetbrains.kotlin.jvm") version "2.4.21"
     id("maven-publish")
 }
 
-version = project.property("mod_version") as String
+val mcTarget = project.property("mc_target") as String
+fun targetProp(key: String) = project.property("target.$mcTarget.$key") as String
+
+version = "${project.property("mod_version")}+$mcTarget"
 group = project.property("maven_group") as String
 
 base {
     archivesName.set(project.property("archives_base_name") as String)
+}
+
+// Optional per-target source set (src/mc26.2/kotlin, src/mc26.3/kotlin) for version-specific adapters.
+sourceSets.main {
+    kotlin.srcDir("src/mc$mcTarget/kotlin")
+    resources.srcDir("src/mc$mcTarget/resources")
 }
 
 repositories {
@@ -19,17 +28,38 @@ repositories {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
+    minecraft("com.mojang:minecraft:${targetProp("minecraft")}")
     implementation("net.fabricmc:fabric-loader:${project.property("loader_version")}")
-    implementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_api_version")}")
+    implementation("net.fabricmc.fabric-api:fabric-api:${targetProp("fabric_api")}")
     implementation("net.fabricmc:fabric-language-kotlin:${project.property("fabric_kotlin_version")}")
-    compileOnly("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
+    compileOnly("com.terraformersmc:modmenu:${targetProp("modmenu")}")
+    runtimeOnly("com.terraformersmc:modmenu:${targetProp("modmenu")}") // dev client only: exercises the ModMenu entrypoint
+
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+// Optional dev window size for runClient: -Pdev_width=1280 -Pdev_height=720
+loom {
+    runs {
+        named("client") {
+            providers.gradleProperty("dev_width").orNull?.let { programArg("--width"); programArg(it) }
+            providers.gradleProperty("dev_height").orNull?.let { programArg("--height"); programArg(it) }
+        }
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
 
 tasks.processResources {
     inputs.property("version", project.version)
+    inputs.property("mcTarget", mcTarget)
     filesMatching("fabric.mod.json") {
-        expand("version" to project.version)
+        expand("version" to project.version, "mcTarget" to mcTarget)
     }
 }
 

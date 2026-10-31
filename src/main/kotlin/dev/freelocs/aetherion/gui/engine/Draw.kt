@@ -130,14 +130,24 @@ object Draw {
     /** Vertically centres a single line inside [h]. */
     fun textMiddle(s: String, x: Int, y: Int, h: Int, color: Int) = text(s, x, y + (h - 8) / 2, color)
 
-    private val fitCache = HashMap<String, String>()
+    private class FitEntry { var width = -1; var result = "" }
 
-    /** Returns [s] shortened with an ellipsis to fit [maxW]; results are cached so steady-state frames do not allocate. */
+    private val fitCache = HashMap<String, FitEntry>()
+
+    /**
+     * Returns [s] shortened with an ellipsis to fit [maxW]. Each string remembers its last result, so a
+     * label rendered every frame at a stable width costs one hash lookup and no allocation.
+     */
     fun fit(s: String, maxW: Int): String {
         if (maxW <= 0) return ""
         if (font.width(s) <= maxW) return s
-        if (fitCache.size > 512) fitCache.clear()
-        return fitCache.getOrPut("$maxW|$s") { font.plainSubstrByWidth(s, (maxW - font.width("…")).coerceAtLeast(0)) + "…" }
+        if (fitCache.size > 1024) fitCache.clear()
+        val e = fitCache.getOrPut(s) { FitEntry() }
+        if (e.width != maxW) {
+            e.width = maxW
+            e.result = font.plainSubstrByWidth(s, (maxW - font.width("…")).coerceAtLeast(0)) + "…"
+        }
+        return e.result
     }
 
     // ── icons & images ──────────────────────────────────────────────────────
@@ -146,18 +156,12 @@ object Draw {
     fun icon(icon: Icon, x: Int, y: Int, scale: Int, color: Int) {
         if (!visible(color)) return
         val c = col(color)
-        for (row in 0 until 8) {
-            val bits = icon.rows[row]
-            if (bits == 0) continue
-            var col = 0
-            while (col < 8) {
-                if ((bits and (0x80 shr col)) == 0) { col++; continue }
-                var end = col
-                while (end + 1 < 8 && (bits and (0x80 shr (end + 1))) != 0) end++
-                g.fill(x + col * scale, y + row * scale, x + (end + 1) * scale, y + (row + 1) * scale, c)
-                calls++
-                col = end + 1
-            }
+        val r = icon.rects
+        var i = 0
+        while (i < r.size) {
+            g.fill(x + r[i] * scale, y + r[i + 1] * scale, x + (r[i] + r[i + 2]) * scale, y + (r[i + 1] + r[i + 3]) * scale, c)
+            calls++
+            i += 4
         }
     }
 

@@ -102,7 +102,7 @@ class AuroraHudEditor(private val parent: Screen?) : Screen(Component.literal("A
     }
     private val snapToggle = AuroraToggle({ snapOn() }, { cfg.set(hud(), hud().setting("snap")!!, it) })
     private val guidesToggle = AuroraToggle({ guidesOn() }, { cfg.set(hud(), hud().setting("guides")!!, it) })
-    private val gridSlider = AuroraSlider(2.0, 32.0, 2.0, 0, " px", 8.0, { cfg.double("hud.core", "grid") }, { cfg.set(hud(), hud().setting("grid")!!, it) }, 70)
+    private val gridSlider = AuroraSlider(2.0, 32.0, 2.0, 0, " px", 8.0, { cfg.double("hud.core", "grid") }, { cfg.set(hud(), hud().setting("grid")!!, it) }, 70).also { it.tooltip = { I18n.tr("hud.grid") } }
 
     // inspector widgets (act on the selection)
     private val scaleSlider = AuroraSlider(0.5, 3.0, 0.1, 1, "x", 1.0, { selPlacement()?.scale?.toDouble() ?: 1.0 }, { v -> selPlacement()?.let { setScale(it, v.toFloat()) } }, 80)
@@ -260,7 +260,7 @@ class AuroraHudEditor(private val parent: Screen?) : Screen(Component.literal("A
         val maxW = (width - 24).coerceAtMost(640)
         val x0 = (width - maxW) / 2
         if (toolsHidden) { topH = 0; inspectorH = 0; return }
-        val topExtra = { w: Widget -> if (w === snapToggle || w === guidesToggle) 40 else if (w === gridSlider) 34 else 0 }
+        val topExtra = { w: Widget -> if (w === snapToggle || w === guidesToggle) 52 else 0 }
         topH = flow(topWidgets, x0 + 12, 0, maxW - 24, topExtra) + 28 + 10
         // inspector: measure first, then place at the bottom edge
         val spread = { w: Widget -> if (w === visibleToggle) 40 else 0 }
@@ -296,7 +296,6 @@ class AuroraHudEditor(private val parent: Screen?) : Screen(Component.literal("A
         for (w in topWidgets) w.draw(mx, my, 0, height)
         Draw.text(I18n.tr("hud.snap"), snapToggle.x + snapToggle.w + 5, snapToggle.y + (snapToggle.h - 8) / 2, Theme.textSecondary)
         Draw.text(I18n.tr("hud.guides"), guidesToggle.x + guidesToggle.w + 5, guidesToggle.y + (guidesToggle.h - 8) / 2, Theme.textSecondary)
-        Draw.text(I18n.tr("hud.grid"), gridSlider.x + gridSlider.w + 5, gridSlider.y + (gridSlider.h - 8) / 2, Theme.textSecondary)
     }
 
     private fun renderInspector(mx: Int, my: Int) {

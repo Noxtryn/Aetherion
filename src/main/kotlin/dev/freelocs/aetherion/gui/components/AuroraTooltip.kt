@@ -54,11 +54,16 @@ object AuroraTooltip {
 
 /** Shared word-wrapping with per-(text,width) caching for paragraphs. */
 object TextWrap {
-    private val cache = HashMap<String, List<String>>()
+    private class Entry { var width = -1; var lines: List<String> = emptyList() }
 
+    private val cache = HashMap<String, Entry>()
+
+    /** Wraps [text] to [width]; the last result per text is cached, so steady-state frames do not allocate. */
     fun wrap(text: String, width: Int): List<String> {
-        if (cache.size > 400) cache.clear()
-        return cache.getOrPut("$width|$text") {
+        if (cache.size > 600) cache.clear()
+        val e = cache.getOrPut(text) { Entry() }
+        if (e.width != width) {
+            e.width = width
             val out = ArrayList<String>()
             for (paragraph in text.split('\n')) {
                 var line = ""
@@ -68,8 +73,9 @@ object TextWrap {
                 }
                 out += line
             }
-            out
+            e.lines = out
         }
+        return e.lines
     }
 
     fun clear() = cache.clear()

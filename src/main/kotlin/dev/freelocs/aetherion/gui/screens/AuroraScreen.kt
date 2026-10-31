@@ -115,6 +115,7 @@ class AuroraScreen(private val parent: Screen?, startCategory: String? = null) :
 
     override fun extractRenderState(ctx: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, partialTick: Float) {
         val t0 = System.nanoTime()
+        val a0 = PerfStats.allocatedNow()
         AuroraAnimationEngine.beginFrame()
         AuroraThemeManager.update()
         uiScale = AuroraLayout.uiScale(width, height)
@@ -156,6 +157,7 @@ class AuroraScreen(private val parent: Screen?, startCategory: String? = null) :
 
         if (uiScale != 1f) ctx.pose().popMatrix()
         PerfStats.record(System.nanoTime() - t0, Draw.calls)
+        if (PerfStats.trackAllocations && a0 != 0L) PerfStats.recordAllocation(PerfStats.allocatedNow() - a0)
     }
 
     private fun rebuildPage() {

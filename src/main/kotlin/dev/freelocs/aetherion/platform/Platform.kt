@@ -28,11 +28,11 @@ object Platform : CapabilityProbe {
     val fps: Int get() = mc.fps
 
     var clipboard: String
-        get() = mc.keyboardHandler.clipboard ?: ""
+        get() = mc.keyboardHandler.clipboard
         set(value) { mc.keyboardHandler.clipboard = value }
 
     /** Language code configured in Minecraft (e.g. `de_de`). */
-    val gameLanguage: String get() = mc.options.languageCode ?: "en_us"
+    val gameLanguage: String get() = mc.options.languageCode
 
     fun serverAddress(): String? = mc.currentServer?.ip
 
@@ -54,8 +54,14 @@ object Platform : CapabilityProbe {
     /** Human readable label for a stored key name, or "" if unbound/unknown. */
     fun keyLabel(name: String): String = if (name.isEmpty()) "" else runCatching { InputConstants.getKey(name).displayName.string }.getOrDefault(name)
 
-    fun isKeyDown(name: String): Boolean =
-        name.isNotEmpty() && runCatching { PlatformInput.isKeyDown(InputConstants.getKey(name).value) }.getOrDefault(false)
+    private val keyValues = HashMap<String, Int>()
+
+    /** Polled every tick, so key names are resolved once and cached (-1 = unknown name). */
+    fun isKeyDown(name: String): Boolean {
+        if (name.isEmpty()) return false
+        val value = keyValues.getOrPut(name) { runCatching { InputConstants.getKey(name).value }.getOrDefault(-1) }
+        return value >= 0 && PlatformInput.isKeyDown(value)
+    }
 }
 
 /** Key constants resolved at compile time for the active target, so values are always correct for it. */

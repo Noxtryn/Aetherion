@@ -34,16 +34,25 @@ dependencies {
     implementation("net.fabricmc:fabric-language-kotlin:${project.property("fabric_kotlin_version")}")
     compileOnly("com.terraformersmc:modmenu:${targetProp("modmenu")}")
     runtimeOnly("com.terraformersmc:modmenu:${targetProp("modmenu")}") // dev client only: exercises the ModMenu entrypoint
+
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // Optional dev window size for runClient: -Pdev_width=1280 -Pdev_height=720
 loom {
     runs {
         named("client") {
-            providers.gradleProperty("dev_width").orNull?.let { programArgs("--width", it) }
-            providers.gradleProperty("dev_height").orNull?.let { programArgs("--height", it) }
+            providers.gradleProperty("dev_width").orNull?.let { programArg("--width"); programArg(it) }
+            providers.gradleProperty("dev_height").orNull?.let { programArg("--height"); programArg(it) }
         }
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
 }
 
 tasks.processResources {

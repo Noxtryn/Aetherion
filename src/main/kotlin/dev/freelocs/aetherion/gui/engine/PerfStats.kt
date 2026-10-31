@@ -41,5 +41,19 @@ object PerfStats {
         return samplesNs[idx] / 1_000_000f
     }
 
+    /** Allocation tracking is for the dev harness only (ThreadMXBean calls are not free). */
+    var trackAllocations = false
+    private var allocTotal = 0L
+    private var allocFrames = 0
+    private val threads = java.lang.management.ManagementFactory.getThreadMXBean() as? com.sun.management.ThreadMXBean
+
+    fun allocatedNow(): Long = if (trackAllocations) threads?.getThreadAllocatedBytes(Thread.currentThread().threadId()) ?: 0L else 0L
+
+    fun recordAllocation(bytes: Long) { if (bytes >= 0) { allocTotal += bytes; allocFrames++ } }
+
+    fun resetAllocations() { allocTotal = 0; allocFrames = 0 }
+    fun allocationFrames() = allocFrames
+    fun allocatedBytesPerFrame(): Long = if (allocFrames == 0) 0 else allocTotal / allocFrames
+
     fun reset() { count = 0; head = 0; lastDrawCalls = 0 }
 }

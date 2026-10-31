@@ -111,7 +111,36 @@ object DevHarness {
     private fun cfg() = Aetherion.config
     private fun cfgDef(id: String) = dev.freelocs.aetherion.common.features.FeatureRegistry.feature(id)!!
 
+    /** Screenshot tour used to check different window sizes and GUI scales. */
+    private fun buildTour() {
+        step(1, "lang") {
+            System.getProperty("aetherion.tourLang")?.let { lang -> val d = cfgDef("general.interface"); cfg().set(d, d.setting("language")!!, lang) }
+        }
+        step(1, "open") { Platform.openScreen(AuroraScreen(Platform.currentScreen())) }
+        step(50, "t1") {}
+        shot("tour-dashboard")
+        step(2, "t2") { val c = screen().debugSidebar().debugCategoryCenter("hud")!!; click(c[0], c[1]) }
+        step(30, "t3") { Aetherion.features.setEnabled(cfgDef("hud.fps"), true); Aetherion.features.setEnabled(cfgDef("hud.clock"), true) }
+        step(10, "t4") { screen().debugReveal(card("hud.fps")!!); screen().ui.openFeature("hud", "hud.fps") }
+        step(30, "t5") {}
+        shot("tour-hud-detail")
+        step(2, "t6") { val c = screen().debugSidebar().debugCategoryCenter("mining")!!; click(c[0], c[1]) }
+        step(30, "t7") { screen().ui.openFeature("mining", "mining.skill-progress") }
+        step(30, "t8") {}
+        shot("tour-roadmap-detail")
+        step(2, "t9") { val c = screen().debugSidebar().debugCategoryCenter("cosmetics")!!; click(c[0], c[1]) }
+        step(30, "t10") {}
+        shot("tour-cosmetics")
+        step(2, "t11") { Platform.openScreen(AuroraHudEditor(Platform.currentScreen())) }
+        step(30, "t12") {}
+        shot("tour-editor")
+        step(2, "t13") { Platform.currentScreen()!!.keyPressed(KeyEvent(InputConstants.KEY_ESCAPE, InputConstants.KEY_ESCAPE, 0)); Platform.currentScreen()!!.keyPressed(KeyEvent(InputConstants.KEY_ESCAPE, InputConstants.KEY_ESCAPE, 0)) }
+        step(40, "t14") { cfg().resetAll(includeGlobal = true); Aetherion.applyUiSettings(); Aetherion.features.reconcile(); cfg().saveNow() }
+    }
+
     private fun buildScript() {
+        if (script == "shots") { buildTour(); return }
+        if (script == "idle") { step(60, "idle-exit") { Platform.mc.stop() }; return }
         step(1, "open") {
             Platform.openScreen(AuroraScreen(Platform.currentScreen()))
         }
@@ -149,7 +178,6 @@ object DevHarness {
         step(6, "toggle-fps-off-check") {
             check("toggle.disables", !cfg().isEnabled("hud.fps") && !Aetherion.features.isActive("hud.fps"))
             check("hud.widgetUnregistered", HudManager.box("hud.fps") == null)
-            check("lifecycle.noLeakedSubscriptions", dev.freelocs.aetherion.common.events.EventBus.subscriberCount >= 0)
         }
         step(2, "toggle-fps-on-again") { screen().debugReveal(card("hud.fps")!!) }
         step(4, "toggle-fps-on-again-click") { val c = card("hud.fps")!!.debugToggleCenter()!!; click(c[0], c[1]) }
@@ -197,6 +225,21 @@ object DevHarness {
         step(30, "scroll-check") { check("scroll.wheelMovesContent", screen().debugScrollOffset() > 0, "offset=${screen().debugScrollOffset()}") }
         shot("05-scrolled")
 
+        // responsive layout: force extreme sizes through the normal resize path
+        step(2, "resize-small") { Platform.currentScreen()!!.resize(200, 120) }
+        step(6, "resize-small-check") {
+            val s = screen()
+            check("resize.smallIsCompact", s.debugLayout().compact && s.debugLayout().contentW > 0 && s.debugLayout().contentH > 0, "scale=${s.debugScale()} content=${s.debugLayout().contentW}x${s.debugLayout().contentH}")
+            check("resize.smallScalesDown", s.debugScale() < 1f)
+        }
+        step(2, "resize-large") { Platform.currentScreen()!!.resize(1700, 950) }
+        step(6, "resize-large-check") {
+            val s = screen()
+            check("resize.largeIsFull", !s.debugLayout().compact && s.debugScale() == 1f, "compact=${s.debugLayout().compact}")
+        }
+        step(2, "resize-restore") { val w = Platform.mc.window; Platform.currentScreen()!!.resize(w.guiScaledWidth, w.guiScaledHeight) }
+        step(8, "resize-restored") { check("resize.restores", screen().debugWidgets().isNotEmpty()) }
+
         // keybinding capture
         step(2, "reveal-keybind") { screen().debugReveal(card("general.interface")!!.debugControls().filterIsInstance<AuroraKeybindField>().first()) }
         step(4, "keybind-click") {
@@ -228,7 +271,7 @@ object DevHarness {
         step(2, "lang-back") {
             cfg().resetFeature(cfgDef("general.interface")); Aetherion.applyUiSettings()
         }
-        step(10, "lang-back-check") { check("language.backToEnglish", I18n.language == "en" || I18n.language == "de" && Platform.gameLanguage.startsWith("de")) }
+        step(10, "lang-back-check") { check("language.autoFollowsGameLanguage", I18n.language == (if (Platform.gameLanguage.startsWith("de")) "de" else "en"), "game=${Platform.gameLanguage} active=${I18n.language}") }
 
         // theme application
         step(2, "theme-ice") { val d = cfgDef("cosmetics.theme"); cfg().set(d, d.setting("accent")!!, "ice") }
@@ -254,6 +297,19 @@ object DevHarness {
         shot("08-modal")
         step(2, "modal-close") { key(InputConstants.KEY_ESCAPE) }
         step(30, "modal-closed") { check("modal.escDismisses", screen().debugModal() == null) }
+
+        // measured allocation of the screen's own frame build on an idle category page (dev-only measurement)
+        step(2, "alloc-start") {
+            val c = screen().debugSidebar().debugCategoryCenter("hud")!!; click(c[0], c[1])
+        }
+        step(40, "alloc-begin") { dev.freelocs.aetherion.gui.engine.PerfStats.trackAllocations = true; dev.freelocs.aetherion.gui.engine.PerfStats.resetAllocations() }
+        step(120, "alloc-end") {
+            val p = dev.freelocs.aetherion.gui.engine.PerfStats
+            p.trackAllocations = false
+            results += "METRIC allocatedBytesPerFrame=${p.allocatedBytesPerFrame()} frames=${p.allocationFrames()} avgCpuMs=${"%.3f".format(p.averageMs())} maxCpuMs=${"%.3f".format(p.maxMs())} drawCalls=${p.lastDrawCalls}"
+            Log.info("METRIC allocatedBytesPerFrame=${p.allocatedBytesPerFrame()} over ${p.allocationFrames()} frames, avg ${p.averageMs()} ms")
+            check("perf.measuredFrames", p.allocationFrames() > 50, "frames=${p.allocationFrames()}")
+        }
 
         // performance page shows real samples
         step(2, "nav-perf") { val c = screen().debugSidebar().debugCategoryCenter("performance")!!; click(c[0], c[1]) }

@@ -33,6 +33,8 @@ class AuroraHeader(private val ui: UiState, private val onBell: () -> Unit) {
     private val bellHover = StateAnim()
     private val variantHover = StateAnim()
     private val dotAnim = Array(AccentPreset.entries.size) { StateAnim() }
+    private var quotedFor = ""
+    private var quoted = ""
     private var contextText = ""
     private var contextAt = -10f
 
@@ -71,7 +73,8 @@ class AuroraHeader(private val ui: UiState, private val onBell: () -> Unit) {
         val cat = FeatureRegistry.category(ui.categoryId)
         val titleW = search.x - x - 16 - 12
         val title = if (ui.searching) I18n.tr("ui.searchResults") else cat?.let { I18n.tr(it.titleKey) } ?: ""
-        val sub = if (ui.searching) "\"${ui.search.trim()}\"" else cat?.let { I18n.tr(it.descriptionKey) } ?: ""
+        if (ui.search != quotedFor) { quotedFor = ui.search; quoted = "\"" + ui.search.trim() + "\"" }
+        val sub = if (ui.searching) quoted else cat?.let { I18n.tr(it.descriptionKey) } ?: ""
         Draw.text(Draw.fit(title, titleW), x + 16, y + if (titleW > 150) 14 else 22, Theme.text)
         if (titleW > 150) Draw.text(Draw.fit(sub, titleW), x + 16, y + 28, Theme.textSecondary)
 

@@ -18,7 +18,9 @@ import kotlin.math.roundToInt
 
 /** Display helpers shared by the card and the detail panel. */
 object FeatureText {
-    fun statusLabel(s: RuntimeStatus) = I18n.tr("status.${s.name.lowercase()}")
+    private val statusKeys = RuntimeStatus.entries.map { "status." + it.name.lowercase() }.toTypedArray()
+
+    fun statusLabel(s: RuntimeStatus) = I18n.tr(statusKeys[s.ordinal])
 
     fun statusColor(s: RuntimeStatus): Int = when (s) {
         RuntimeStatus.ACTIVE -> Colors.SUCCESS

@@ -174,9 +174,9 @@ class FeatureDetailPanel(private val ui: UiState) {
     }
 
     private fun heading(text: String, x: Int, y: Int, w: Int): Int {
-        Draw.text(text.uppercase(), x, y, Colors.alpha(Theme.textSecondary, 0.9f))
-        Draw.rect(x, y + 10, w, 1, Colors.alpha(Theme.border, 0.7f))
-        return y + 16
+        Draw.text(text.uppercase(), x, y + 4, Colors.alpha(Theme.textSecondary, 0.9f))
+        Draw.rect(x, y + 14, w, 1, Colors.alpha(Theme.border, 0.7f))
+        return y + 21
     }
 
     private fun paragraph(text: String, x: Int, y: Int, w: Int, color: Int): Int {

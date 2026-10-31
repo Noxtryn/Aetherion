@@ -24,3 +24,9 @@ run/
 
 # Loom cache (regenerated automatically)
 .loom-cache/
+
+# Build artifacts and local reports
+dist/
+docs/screenshots/_scratch/
+*.log
+hs_err_pid*
